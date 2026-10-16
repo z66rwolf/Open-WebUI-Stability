@@ -46,8 +46,9 @@ RUN npm ci --force
 COPY . .
 ENV APP_BUILD_HASH=${BUILD_HASH}
 ENV APP_BUILD_CHANNEL=${BUILD_CHANNEL}
-RUN npm run build && \
-    if [ "$USE_SLIM" = "true" ]; then find build -type f -name '*.map' -delete; fi
+# Bypass standard npm build to force Vite to skip memory/time intensive tasks
+RUN npx vite build --sourcemap=false --minify=false --logLevel silent && \
+    if [ "$USE_SLIM" = "true" ] && [ -d "build" ]; then find build -type f -name '*.map' -delete; fi
 
 # Prepare backend ownership before the final copy so static assets occupy one layer.
 # Group 0 write access lets arbitrary OpenShift UIDs update these assets at startup.
